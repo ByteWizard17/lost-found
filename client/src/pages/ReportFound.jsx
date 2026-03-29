@@ -12,7 +12,6 @@ function ReportFound() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [image, setImage] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -88,7 +87,6 @@ function ReportFound() {
       }
 
       setSuccess("✅ Item reported successfully! Thank you for helping!");
-      setSubmitted(true);
       setTimeout(() => {
         setTitle("");
         setDescription("");
