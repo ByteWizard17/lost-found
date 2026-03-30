@@ -1,10 +1,14 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
 import connectDB from "./db.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import itemRoutes from "./routes/itemRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 // Load environment variables first
 dotenv.config();
@@ -46,6 +50,8 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/users", userRoutes);
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
@@ -58,6 +64,32 @@ app.use((err, req, res, next) => {
 // ✅ FIXED PORT (Render friendly)
 const PORT = process.env.PORT || 10000;
 
-app.listen(PORT, () => {
+// Create HTTP server with Socket.io
+const server = http.createServer(app);
+export const io = new SocketIOServer(server, {
+  cors: {
+    origin: "*",
+    credentials: true,
+  },
+});
+
+// Socket.io connection
+io.on("connection", (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+
+  // When user joins notification room
+  socket.on("user_connected", (userId) => {
+    socket.join(`user_${userId}`);
+    console.log(`👤 User ${userId} joined notification room`);
+  });
+
+  // Handle disconnect
+  socket.on("disconnect", () => {
+    console.log(`❌ User disconnected: ${socket.id}`);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🔌 Socket.io enabled for real-time notifications`);
 });
