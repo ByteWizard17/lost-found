@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 function Dashboard() {
   const [items, setItems] = useState([]);
@@ -12,10 +13,8 @@ function Dashboard() {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/items?uncollected=true");
-      if (!res.ok) throw new Error("Failed to load items");
-      const data = await res.json();
-      setItems(data || []);
+      const data = await api.get("/items?uncollected=true");
+      setItems(data.data || []);
       setError("");
     } catch (err) {
       console.error("Error:", err);
@@ -32,8 +31,7 @@ function Dashboard() {
 
   const markCollected = async (id) => {
     try {
-      const res = await fetch(`/api/items/${id}/collected`, { method: "PATCH" });
-      if (!res.ok) throw new Error("Could not mark collected");
+      await api.patch(`/items/${id}/collected`);
       setItems((prev) => prev.filter((item) => item._id !== id));
     } catch (err) {
       console.error(err);
