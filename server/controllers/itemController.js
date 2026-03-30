@@ -2,7 +2,7 @@ import Item from "../models/Item.js";
 
 export const addItem = async (req, res) => {
   try {
-    const { title, description, location, type } = req.body;
+    const { title, description, location, type, category, color, dateLost, dateFound, reward, condition, phone, email } = req.body;
     if (!title || !description) {
       return res.status(400).json({ message: "Title and description are required." });
     }
@@ -11,8 +11,16 @@ export const addItem = async (req, res) => {
       title,
       description,
       location,
+      category,
+      color,
       type: type || "lost",
-      date: req.body.date || new Date(),
+      dateLost,
+      dateFound,
+      reward,
+      condition,
+      phone,
+      email,
+      date: new Date(),
     };
     if (req.file) {
       payload.image = `/uploads/${req.file.filename}`;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 function ReportLost() {
   const [title, setTitle] = useState("");
@@ -77,11 +78,12 @@ function ReportLost() {
     if (image) formData.append("image", image);
 
     try {
-      const res = await fetch("/api/items", {
-        method: "POST",
-        body: formData,
+      const res = await api.post("/items", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
       });
-      if (!res.ok) {
+      if (res.status !== 200) {
         setError("Failed to submit item. Please try again.");
         return;
       }
@@ -101,7 +103,8 @@ function ReportLost() {
         setSuccess("");
       }, 2000);
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      console.error("Submit error:", err);
+      setError(err.response?.data?.message || err.message || "Failed to submit item. Please try again.");
     }
   };
 

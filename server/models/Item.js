@@ -10,12 +10,20 @@ const itemSchema = new mongoose.Schema({
     required: true,
   },
   location: String,
+  category: String,
+  color: String,
   image: String,
   type: {
     type: String,
     enum: ["lost", "found"],
     default: "lost",
   },
+  dateLost: Date,
+  dateFound: Date,
+  reward: String,
+  condition: String,
+  phone: String,
+  email: String,
   collected: {
     type: Boolean,
     default: false,
@@ -27,7 +35,8 @@ const itemSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-  },});
+  },
+});
 
 const Item = mongoose.model("Item", itemSchema);
 
