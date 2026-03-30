@@ -27,7 +27,15 @@ export const addItem = async (req, res) => {
     }
 
     const item = await Item.create(payload);
-    res.json(item);
+    
+    // Convert relative image path to full URL in response
+    const itemObj = item.toObject ? item.toObject() : item;
+    if (itemObj.image && itemObj.image.startsWith("/uploads")) {
+      const baseURL = process.env.API_URL || "https://lost-found-1-flid.onrender.com";
+      itemObj.image = `${baseURL}${itemObj.image}`;
+    }
+    
+    res.json(itemObj);
   } catch (error) {
     console.error("Add item error", error);
     if (error.name === "ValidationError") {
@@ -43,7 +51,19 @@ export const getItems = async (req, res) => {
     filter.collected = false;
   }
   const items = await Item.find(filter);
-  res.json(items);
+  
+  // Convert relative image paths to full URLs
+  const itemsWithFullImageUrls = items.map((item) => {
+    const itemObj = item.toObject ? item.toObject() : item;
+    if (itemObj.image && itemObj.image.startsWith("/uploads")) {
+      // Get the base URL from environment or construct it
+      const baseURL = process.env.API_URL || "https://lost-found-1-flid.onrender.com";
+      itemObj.image = `${baseURL}${itemObj.image}`;
+    }
+    return itemObj;
+  });
+  
+  res.json(itemsWithFullImageUrls);
 };
 
 export const markCollected = async (req, res) => {
