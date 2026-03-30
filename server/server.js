@@ -27,19 +27,13 @@ connectDB();
 
 const app = express();
 
-// CORS configuration
-const corsOptions = {
-  origin: [
-    "https://lost-found-ebcf.vercel.app",
-    "http://localhost:3000", // for local development
-    "http://localhost:5000"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-};
 
-app.use(cors(corsOptions));
+// ✅ FIXED CORS (allows mobile + all devices)
+app.use(cors({
+  origin: "*",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -49,6 +43,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
 
@@ -60,9 +55,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+// ✅ FIXED PORT (Render friendly)
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`📍 API: http://localhost:${PORT}/api`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
