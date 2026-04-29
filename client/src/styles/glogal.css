@@ -145,6 +145,25 @@ button:active {
   margin-left: 10px;
 }
 
+/* Admin Link Styling */
+.admin-link {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  padding: 10px 16px !important;
+  border-radius: 5px;
+  font-weight: 600 !important;
+  color: white !important;
+  text-decoration: none !important;
+  transition: all 0.3s !important;
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.admin-link:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3) !important;
+}
+
 /* navigation section */
 
 .nav-links{
@@ -761,6 +780,58 @@ button:active {
 .mark-collected-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.report-post-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  margin-top: 10px;
+}
+
+.report-post-btn:hover {
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3);
+}
+
+.report-post-form {
+  margin-top: 14px;
+  padding: 16px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 12px;
+}
+
+.report-post-form label {
+  display: block;
+  font-weight: 600;
+  color: #9a3412;
+  margin-bottom: 6px;
+}
+
+.report-post-form select,
+.report-post-form textarea {
+  width: 100%;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.report-post-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.submit-report-btn {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.cancel-report-btn {
+  background: #e2e8f0;
+  color: #1e293b;
+  box-shadow: none;
+}
+
+.cancel-report-btn:hover {
+  background: #cbd5e1;
+  box-shadow: none;
 }
 
 .error-message {

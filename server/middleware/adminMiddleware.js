@@ -1,11 +1,14 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-const authMiddleware = async (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
-  if (!token) return res.status(401).json({ message: "No token provided" });
-
+const adminMiddleware = async (req, res, next) => {
   try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
     const userId = decoded._id || decoded.id;
     const user = await User.findById(userId).select(
@@ -22,6 +25,11 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    if (user.role !== "admin") {
+      console.log("Access denied: User is not admin", userId);
+      return res.status(403).json({ message: "Access denied: Admin only" });
+    }
+
     req.user = {
       ...decoded,
       _id: user._id,
@@ -29,8 +37,9 @@ const authMiddleware = async (req, res, next) => {
     };
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    console.error("Admin middleware error:", error);
+    res.status(401).json({ message: "Unauthorized access" });
   }
 };
 
-export default authMiddleware;
+export default adminMiddleware;

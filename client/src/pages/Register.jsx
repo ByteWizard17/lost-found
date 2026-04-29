@@ -16,7 +16,6 @@ function Register() {
     e.preventDefault();
     setError("");
 
-    // Validation
     if (!name.trim()) {
       setError("Name is required");
       return;
@@ -40,12 +39,12 @@ function Register() {
 
     setLoading(true);
     try {
-      await register(name, email, password);
+      const data = await register(name, email, password);
       setName("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-      navigate("/");
+      navigate(data.user?.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       setError("Registration failed: " + (err.message || "Please try again"));
     } finally {
@@ -57,12 +56,12 @@ function Register() {
     <div className="container">
       <div className="auth-card">
         <div className="auth-header">
-          <h2>📝 Create Account</h2>
+          <h2>Create Account</h2>
           <p>Join us to help find lost items</p>
         </div>
 
         <form onSubmit={handleRegister} className="auth-form">
-          {error && <p className="error-message">❌ {error}</p>}
+          {error && <p className="error-message">{error}</p>}
 
           <div className="form-group">
             <label>Full Name</label>
@@ -114,7 +113,9 @@ function Register() {
         </form>
 
         <div className="auth-footer">
-          <p>Already have an account? <Link to="/login">Login here</Link></p>
+          <p>
+            Already have an account? <Link to="/login">Login here</Link>
+          </p>
         </div>
       </div>
     </div>

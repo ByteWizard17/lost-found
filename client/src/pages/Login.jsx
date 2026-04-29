@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
@@ -9,14 +9,15 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminLogin = location.pathname === "/admin-login";
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    
-    // Validation
+
     if (!email.trim()) {
-      setError("Email is required");
+      setError(`${isAdminLogin ? "Admin email" : "Email"} is required`);
       return;
     }
     if (!password.trim()) {
@@ -26,12 +27,23 @@ function Login() {
 
     setLoading(true);
     try {
-      await login(email, password);
-      setEmail("");
-      setPassword("");
-      navigate("/");
+      const data = await login(email, password);
+
+      if (isAdminLogin) {
+        if (data.user?.role !== "admin") {
+          setError("This account does not have admin access.");
+          return;
+        }
+        navigate("/admin");
+        return;
+      }
+
+      navigate(data.user?.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      setError("Login failed: " + (err.message || "Please check your credentials"));
+      setError(
+        `${isAdminLogin ? "Admin login" : "Login"} failed: ` +
+          (err.message || "Please check your credentials")
+      );
     } finally {
       setLoading(false);
     }
@@ -41,18 +53,22 @@ function Login() {
     <div className="container">
       <div className="auth-card">
         <div className="auth-header">
-          <h2>🔐 Welcome Back</h2>
-          <p>Login to your account</p>
+          <h2>{isAdminLogin ? "Admin Login" : "Welcome Back"}</h2>
+          <p>
+            {isAdminLogin
+              ? "Sign in with your admin account to open the dashboard"
+              : "Login to your account"}
+          </p>
         </div>
 
         <form onSubmit={handleLogin} className="auth-form">
-          {error && <p className="error-message">❌ {error}</p>}
+          {error && <p className="error-message">{error}</p>}
 
           <div className="form-group">
-            <label>Email Address</label>
+            <label>{isAdminLogin ? "Admin Email" : "Email Address"}</label>
             <input
               type="email"
-              placeholder="your.email@example.com"
+              placeholder={isAdminLogin ? "admin@example.com" : "your.email@example.com"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
@@ -63,7 +79,9 @@ function Login() {
             <label>Password</label>
             <input
               type="password"
-              placeholder="Enter your password"
+              placeholder={
+                isAdminLogin ? "Enter your admin password" : "Enter your password"
+              }
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
@@ -71,12 +89,28 @@ function Login() {
           </div>
 
           <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading
+              ? isAdminLogin
+                ? "Signing in..."
+                : "Logging in..."
+              : isAdminLogin
+                ? "Open Admin Dashboard"
+                : "Login"}
           </button>
         </form>
 
         <div className="auth-footer">
-          <p>Don't have an account? <Link to="/register">Register here</Link></p>
+          <p>
+            {isAdminLogin ? (
+              <>
+                Not an admin? <Link to="/login">Go to user login</Link>
+              </>
+            ) : (
+              <>
+                Don't have an account? <Link to="/register">Register here</Link>
+              </>
+            )}
+          </p>
         </div>
       </div>
     </div>

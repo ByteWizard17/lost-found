@@ -1,6 +1,7 @@
 import express from "express";
 import upload from "../middleware/uploadMiddleware.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import adminMiddleware from "../middleware/adminMiddleware.js";
 import {
   addItem,
   getItems,
@@ -14,6 +15,8 @@ import {
   rejectItem,
   reportItem,
   getAdminStats,
+  getAllItems,
+  deleteItem,
 } from "../controllers/itemController.js";
 
 const router = express.Router();
@@ -31,9 +34,11 @@ router.patch("/:itemId/claim/:claimIndex/reject", authMiddleware, rejectClaim);
 router.post("/:itemId/report", authMiddleware, reportItem);
 
 // Admin routes
-router.get("/admin/pending", authMiddleware, getPendingItems);
-router.patch("/admin/:itemId/approve", authMiddleware, approveItem);
-router.patch("/admin/:itemId/reject", authMiddleware, rejectItem);
-router.get("/admin/stats", authMiddleware, getAdminStats);
+router.get("/admin/all", adminMiddleware, getAllItems);
+router.get("/admin/pending", adminMiddleware, getPendingItems);
+router.patch("/admin/:itemId/approve", adminMiddleware, approveItem);
+router.patch("/admin/:itemId/reject", adminMiddleware, rejectItem);
+router.delete("/admin/:itemId", adminMiddleware, deleteItem);
+router.get("/admin/stats", adminMiddleware, getAdminStats);
 
 export default router;

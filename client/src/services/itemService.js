@@ -47,6 +47,11 @@ export const reportItem = async (itemId, reason) => {
   return response.data;
 };
 
+export const createReport = async (itemId, reason, description) => {
+  const response = await api.post("/reports", { itemId, reason, description });
+  return response.data;
+};
+
 // Admin functions
 export const getPendingItems = async () => {
   const response = await api.get("/items/admin/pending");

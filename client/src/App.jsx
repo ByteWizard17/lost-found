@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/DashBoard";
+import AdminDashboard from "./pages/AdminDashboard";
 import Navbar from "./components/navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ReportLost from "./pages/ReportLost";
@@ -15,8 +16,17 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin-login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/report-lost"
           element={

@@ -3,6 +3,21 @@ import User from "../models/User.js";
 import { createNotification } from "./notificationController.js";
 import { sendEmail, notificationEmails } from "../services/emailService.js";
 
+const getBaseUrl = () =>
+  process.env.API_URL || "https://lost-found-1-flid.onrender.com";
+
+const normalizeItemImage = (item) => {
+  const itemObj = item?.toObject ? item.toObject() : item;
+
+  if (itemObj?.image && itemObj.image.startsWith("/uploads")) {
+    itemObj.image = `${getBaseUrl()}${itemObj.image}`;
+  }
+
+  return itemObj;
+};
+
+const normalizeItems = (items) => items.map(normalizeItemImage);
+
 export const addItem = async (req, res) => {
   try {
     const { title, description, location, type, category, color, dateLost, dateFound, reward, condition, phone, email } = req.body;
@@ -48,13 +63,7 @@ export const addItem = async (req, res) => {
     });
 
     // Convert relative image path to full URL in response
-    const itemObj = item.toObject ? item.toObject() : item;
-    if (itemObj.image && itemObj.image.startsWith("/uploads")) {
-      const baseURL = process.env.API_URL || "https://lost-found-1-flid.onrender.com";
-      itemObj.image = `${baseURL}${itemObj.image}`;
-    }
-    
-    res.json(itemObj);
+    res.json(normalizeItemImage(item));
   } catch (error) {
     console.error("Add item error", error);
     if (error.name === "ValidationError") {
@@ -80,16 +89,7 @@ export const getItems = async (req, res) => {
     const items = await Item.find(filter).populate("userId", "name phone email");
     
     // Convert relative image paths to full URLs
-    const itemsWithFullImageUrls = items.map((item) => {
-      const itemObj = item.toObject ? item.toObject() : item;
-      if (itemObj.image && itemObj.image.startsWith("/uploads")) {
-        const baseURL = process.env.API_URL || "https://lost-found-1-flid.onrender.com";
-        itemObj.image = `${baseURL}${itemObj.image}`;
-      }
-      return itemObj;
-    });
-    
-    res.json(itemsWithFullImageUrls);
+    res.json(normalizeItems(items));
   } catch (error) {
     console.error("Get items error:", error);
     res.status(500).json({ message: "Failed to fetch items" });
@@ -247,16 +247,7 @@ export const searchItems = async (req, res) => {
 
     const items = await Item.find(filter).populate("userId", "name phone");
 
-    const itemsWithImages = items.map((item) => {
-      const itemObj = item.toObject ? item.toObject() : item;
-      if (itemObj.image && itemObj.image.startsWith("/uploads")) {
-        const baseURL = process.env.API_URL || "https://lost-found-1-flid.onrender.com";
-        itemObj.image = `${baseURL}${itemObj.image}`;
-      }
-      return itemObj;
-    });
-
-    res.json(itemsWithImages);
+    res.json(normalizeItems(items));
   } catch (error) {
     console.error("Search error:", error);
     res.status(500).json({ message: "Failed to search items" });
@@ -266,8 +257,10 @@ export const searchItems = async (req, res) => {
 // ADMIN FUNCTIONS
 export const getPendingItems = async (req, res) => {
   try {
-    const items = await Item.find({ status: "pending" }).populate("userId", "name email");
-    res.json(items);
+    const items = await Item.find({ status: "pending" })
+      .populate("userId", "name email")
+      .sort({ createdAt: -1, date: -1 });
+    res.json(normalizeItems(items));
   } catch (error) {
     console.error("Get pending error:", error);
     res.status(500).json({ message: "Failed to fetch pending items" });
@@ -398,5 +391,56 @@ export const getAdminStats = async (req, res) => {
   } catch (error) {
     console.error("Get stats error:", error);
     res.status(500).json({ message: "Failed to fetch statistics" });
+  }
+};
+
+// ADMIN: Get all items (with all statuses) for management
+export const getAllItems = async (req, res) => {
+  try {
+    const items = await Item.find()
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1, date: -1 });
+
+    res.json(normalizeItems(items));
+  } catch (error) {
+    console.error("Get all items error:", error);
+    res.status(500).json({ message: "Failed to fetch items" });
+  }
+};
+
+// ADMIN: Delete item (for spam/inappropriate content)
+export const deleteItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { reason } = req.body;
+
+    const item = await Item.findByIdAndDelete(itemId);
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Notify item owner about deletion
+    createNotification(
+      item.userId,
+      "item_deleted",
+      "Item Deleted",
+      `Your item "${item.title}" has been deleted by admin. Reason: ${reason || "Violation of community guidelines"}`,
+      itemId
+    );
+
+    const owner = await User.findById(item.userId);
+    if (owner && owner.email) {
+      sendEmail(
+        owner.email,
+        "Item Deleted",
+        `<p>Your item "<strong>${item.title}</strong>" has been deleted by admin.</p><p>Reason: ${reason || "Violation of community guidelines"}</p>`
+      );
+    }
+
+    res.json({ message: "Item deleted successfully" });
+  } catch (error) {
+    console.error("Delete item error:", error);
+    res.status(500).json({ message: "Failed to delete item" });
   }
 };

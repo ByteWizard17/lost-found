@@ -21,7 +21,7 @@
     "build": "node ./node_modules/react-scripts/bin/react-scripts.js build",
     "test": "node ./node_modules/react-scripts/bin/react-scripts.js test",
     "eject": "node ./node_modules/react-scripts/bin/react-scripts.js eject",
-    "dev": "concurrently \"npm run server\" \"npm start\""
+    "dev": "concurrently \"npm --prefix ../server run dev\" \"npm start\""
   },
   "eslintConfig": {
     "extends": [

@@ -6,18 +6,16 @@ export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    console.log("📝 Registration attempt:", { name, email });
+    console.log("Registration attempt:", { name, email });
 
-    // Validation
     if (!name || !email || !password) {
-      console.log("❌ Validation error: Missing fields");
+      console.log("Validation error: Missing fields");
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.log("❌ User already exists:", email);
+      console.log("User already exists:", email);
       return res.status(400).json({ message: "Email already registered" });
     }
 
@@ -26,24 +24,25 @@ export const registerUser = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password: hashed
+      password: hashed,
     });
 
-    console.log("✅ User registered successfully:", user._id);
-
     if (!process.env.JWT_SECRET) {
-      console.error("❌ JWT_SECRET not found!");
+      console.error("JWT_SECRET not found");
       return res.status(500).json({ message: "Server configuration error" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET
+    );
 
-    res.json({ 
-      token, 
-      user: { _id: user._id, name: user.name, email: user.email } 
+    res.json({
+      token,
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (err) {
-    console.error("❌ Registration error:", err);
+    console.error("Registration error:", err);
     res.status(500).json({ message: "Registration failed: " + err.message });
   }
 };
@@ -52,45 +51,50 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log("🔐 Login attempt:", email);
+    console.log("Login attempt:", email);
 
-    // Validation
     if (!email || !password) {
-      console.log("❌ Validation error: Missing email or password");
+      console.log("Validation error: Missing email or password");
       return res.status(400).json({ message: "Email and password are required" });
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      console.log("❌ User not found:", email);
+      console.log("User not found:", email);
       return res.status(400).json({ message: "User not found" });
+    }
+
+    if (user.isBlocked) {
+      console.log("Blocked user login attempt:", email);
+      return res.status(403).json({
+        message: user.blockedReason || "Your account has been blocked by admin",
+      });
     }
 
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
-      console.log("❌ Invalid password for user:", email);
+      console.log("Invalid password for user:", email);
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    console.log("✅ Password matched for user:", email);
-
     if (!process.env.JWT_SECRET) {
-      console.error("❌ JWT_SECRET not found!");
+      console.error("JWT_SECRET not found");
       return res.status(500).json({ message: "Server configuration error" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET
+    );
 
-    console.log("✅ Token generated successfully for:", email);
-
-    res.json({ 
-      token, 
-      user: { _id: user._id, name: user.name, email: user.email } 
+    res.json({
+      token,
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (err) {
-    console.error("❌ Login error:", err);
+    console.error("Login error:", err);
     res.status(500).json({ message: "Login failed: " + err.message });
   }
 };
