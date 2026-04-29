@@ -16,34 +16,52 @@ dotenv.config();
 
 // Verify environment variables
 if (!process.env.JWT_SECRET) {
-  console.error("❌ ERROR: JWT_SECRET is not set in .env file");
+  console.error("ERROR: JWT_SECRET is not set in .env file");
   process.exit(1);
 }
 
 if (!process.env.MONGO_URI) {
-  console.error("❌ ERROR: MONGO_URI is not set in .env file");
+  console.error("ERROR: MONGO_URI is not set in .env file");
   process.exit(1);
 }
 
-console.log("✅ Environment variables loaded successfully");
+console.log("Environment variables loaded successfully");
 
 // connect database
 connectDB();
 
 const app = express();
 
+const allowedOrigins = (
+  process.env.FRONTEND_URLS || process.env.FRONTEND_URL || ""
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-// ✅ FIXED CORS (allows mobile + all devices)
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
-}));
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow requests from tools or non-browser clients that do not send Origin.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path}`);
+  console.log(`Request: ${req.method} ${req.path}`);
   next();
 });
 
@@ -56,41 +74,37 @@ app.use("/api/reports", reportRoutes);
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error("❌ Global error:", err);
-  res.status(err.status || 500).json({ 
-    message: err.message || "Something went wrong" 
+  console.error("Global error:", err);
+  res.status(err.status || 500).json({
+    message: err.message || "Something went wrong",
   });
 });
 
-// ✅ FIXED PORT (Render friendly)
 const PORT = process.env.PORT || 10000;
 
 // Create HTTP server with Socket.io
 const server = http.createServer(app);
 export const io = new SocketIOServer(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
 // Socket.io connection
 io.on("connection", (socket) => {
-  console.log(`✅ User connected: ${socket.id}`);
+  console.log(`User connected: ${socket.id}`);
 
   // When user joins notification room
   socket.on("user_connected", (userId) => {
     socket.join(`user_${userId}`);
-    console.log(`👤 User ${userId} joined notification room`);
+    console.log(`User ${userId} joined notification room`);
   });
 
   // Handle disconnect
   socket.on("disconnect", () => {
-    console.log(`❌ User disconnected: ${socket.id}`);
+    console.log(`User disconnected: ${socket.id}`);
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🔌 Socket.io enabled for real-time notifications`);
+  console.log(`Server running on port ${PORT}`);
+  console.log("Socket.io enabled for real-time notifications");
 });
