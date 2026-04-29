@@ -39,6 +39,19 @@ const allowedOrigins = (
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const allowedOriginPatterns = [
+  /\.vercel\.app$/i,
+  /^http:\/\/localhost(?::\d+)?$/i,
+  /^http:\/\/127\.0\.0\.1(?::\d+)?$/i,
+  /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?$/i,
+  /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?$/i,
+  /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(?::\d+)?$/i,
+];
+
+const isAllowedOrigin = (origin) =>
+  allowedOrigins.includes(origin) ||
+  allowedOriginPatterns.some((pattern) => pattern.test(origin));
+
 const corsOptions = {
   origin(origin, callback) {
     // Allow requests from tools or non-browser clients that do not send Origin.
@@ -46,7 +59,7 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
