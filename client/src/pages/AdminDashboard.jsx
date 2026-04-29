@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adminService } from "../services/adminService";
 import "../styles/adminDashboard.css";
 
@@ -22,10 +22,6 @@ function AdminDashboard() {
   const [notice, setNotice] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
-
-  useEffect(() => {
-    loadData(activeTab);
-  }, [activeTab]);
 
   const ownerName = (item) => item?.userId?.name || "Deleted user";
   const ownerEmail = (item) => item?.userId?.email || "No email";
@@ -59,7 +55,7 @@ function AdminDashboard() {
     }
   };
 
-  const loadData = async (tab) => {
+  const loadData = useCallback(async (tab) => {
     try {
       setLoading(true);
       setError("");
@@ -89,7 +85,11 @@ function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData(activeTab);
+  }, [activeTab, loadData]);
 
   const loadDashboard = async () => {
     const [statsData, pending] = await Promise.all([
