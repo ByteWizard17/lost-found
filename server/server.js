@@ -35,10 +35,9 @@ const app = express();
 
 // ✅ FIXED CORS (allows mobile + all devices)
 app.use(cors({
-  origin: "*",
+  origin: process.env.FRONTEND_URL,
   credentials: true
 }));
-
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -70,7 +69,7 @@ const PORT = process.env.PORT || 10000;
 const server = http.createServer(app);
 export const io = new SocketIOServer(server, {
   cors: {
-    origin: "*",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   },
 });
